@@ -11,7 +11,7 @@ const NAME = 'air-datepicker';
 let plugins = [
     new webpack.DefinePlugin({
         'process.env': {
-            'NODE_ENV': JSON.stringify(process.env.NODE_ENV).toLowerCase()
+            'NODE_ENV': JSON.stringify((process.env.NODE_ENV || 'development').toLowerCase())
         }
     }),
     new HtmlWebpackPlugin({
@@ -63,9 +63,9 @@ let config = {
                 test: /\.scss$/,
                 use: [
                     dev ? 'style-loader' : MiniCssExtractPlugin.loader,
-                    {loader: 'css-loader', options: {sourceMap: dev}},
-                    {loader:'postcss-loader', options: {sourceMap: dev}},
-                    {loader: 'sass-loader', options: {sourceMap: dev}},
+                    { loader: 'css-loader', options: { sourceMap: dev } },
+                    { loader: 'postcss-loader', options: { sourceMap: dev } },
+                    { loader: 'sass-loader', options: { sourceMap: dev } },
                 ]
             },
         ]

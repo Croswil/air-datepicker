@@ -16,7 +16,7 @@
 
 .air-datepicker-body--day-names {
   display: grid;
-  grid-template-columns: repeat(7, var(--adp-day-cell-width));
+  grid-template-columns: repeat(8, var(--adp-day-cell-width));
   margin: 8px 0 3px;
 }
 
@@ -39,13 +39,36 @@
   }
 }
 
+.air-datepicker-body--week-num {
+  display: flex;
+  align-items: center;
+  /* allinea verticalmente il contenuto */
+  justify-content: center;
+  height: 32px;
+  /* stessa altezza delle celle giorno (adatta se serve) */
+  font-weight: bold;
+  color: #e97a1b;
+  background: none;
+  border: none;
+  font-size: 0.8em;
+  /* opzionale: puoi ritoccare */
+  /* rimuovi padding/margin se serve */
+  padding: 0;
+  margin: 0;
+}
+
+.air-datepicker-body--day-name {
+  text-align: center;
+}
+
 /*  Cells container
    ------------------------------------------------- */
 
 .air-datepicker-body--cells {
   display: grid;
+
   &.-days- {
-    grid-template-columns: repeat(7, var(--adp-day-cell-width));
+    grid-template-columns: repeat(8, var(--adp-day-cell-width));
     grid-auto-rows: var(--adp-day-cell-height);
   }
 

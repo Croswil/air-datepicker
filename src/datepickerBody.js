@@ -18,7 +18,7 @@ import DatepickerCell from './datepickerCell';
 import './datepickerBody.scss';
 
 let templates = {
-    [consts.days]:'' +
+    [consts.days]: '' +
         '<div class="air-datepicker-body--day-names"></div>' +
         `<div class="air-datepicker-body--cells -${consts.days}-"></div>`,
     [consts.months]: `<div class="air-datepicker-body--cells -${consts.months}-"></div>`,
@@ -27,8 +27,18 @@ let templates = {
 
 const cellClassName = '.air-datepicker-cell';
 
+// Funzione ISO week number (lunedì=primo giorno, settimana 1: quella col 4 gennaio)
+function getISOWeekNumber(date) {
+    const d = new Date(date.getTime());
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    week1.setDate(week1.getDate() + 3 - ((week1.getDay() + 6) % 7));
+    return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+}
+
 export default class DatepickerBody {
-    constructor({dp, type, opts}) {
+    constructor({ dp, type, opts }) {
         this.dp = dp;
         this.type = type;
         this.opts = opts;
@@ -51,19 +61,17 @@ export default class DatepickerBody {
     }
 
     _bindEvents() {
-        let {range, dynamicRange} = this.opts;
+        let { range, dynamicRange } = this.opts;
 
         addEventListener(this.$el, 'mouseover', this.onMouseOverCell);
         addEventListener(this.$el, 'mouseout', this.onMouseOutCell);
         addEventListener(this.$el, 'click', this.onClickBody);
-
 
         if (range && dynamicRange) {
             addEventListener(this.$el, 'mousedown', this.onMouseDown);
             addEventListener(this.$el, 'mousemove', this.onMouseMove);
             addEventListener(window.document, 'mouseup', this.onMouseUp);
         }
-
     }
 
     _bindDatepickerEvents() {
@@ -82,9 +90,10 @@ export default class DatepickerBody {
     }
 
     _getDayNamesHtml(firstDay = this.dp.locale.firstDay) {
-        let html = '',
-            isWeekend = this.dp.isWeekend,
-            {onClickDayName} = this.opts,
+        // PATCH: aggiungi header colonna settimana
+        let html = '<div class="air-datepicker-body--week-num air-datepicker-body--day-name">Set</div>';
+        let isWeekend = this.dp.isWeekend,
+            { onClickDayName } = this.opts,
             curDay = firstDay,
             totalDays = 7,
             i = 0;
@@ -106,11 +115,11 @@ export default class DatepickerBody {
     }
 
     renderDayNames() {
-        this.$names.innerHTML =  this._getDayNamesHtml();
+        this.$names.innerHTML = this._getDayNamesHtml();
     }
 
     _generateCell(date) {
-        let {type, dp, opts} = this;
+        let { type, dp, opts } = this;
         return new DatepickerCell({
             type,
             dp,
@@ -197,7 +206,7 @@ export default class DatepickerBody {
     }
 
     onClickBody = (e) => {
-        let {onClickDayName} = this.opts;
+        let { onClickDayName } = this.opts;
         let target = e.target;
 
         if (target.closest(cellClassName)) {
@@ -229,17 +238,17 @@ export default class DatepickerBody {
 
         let $cell = closest(e.target, cellClassName),
             cell = $cell && $cell.adpCell,
-            {selectedDates, rangeDateTo, rangeDateFrom} = this.dp;
+            { selectedDates, rangeDateTo, rangeDateFrom } = this.dp;
 
         if (!cell || cell.isDisabled) return;
 
-        let {date} = cell;
+        let { date } = cell;
 
         // Allow user to change selected range
         if (selectedDates.length === 2) {
             // Add hours and minute to new selected date, to update time sliders properly
             if (this.rangeFromFocused && !isDateBigger(date, rangeDateTo)) {
-                let {hours, minutes} = getParsedDate(rangeDateFrom);
+                let { hours, minutes } = getParsedDate(rangeDateFrom);
                 date.setHours(hours);
                 date.setMinutes(minutes);
 
@@ -247,7 +256,7 @@ export default class DatepickerBody {
                 this.dp.replaceDate(rangeDateFrom, date);
             }
             if (this.rangeToFocused && !isDateSmaller(date, rangeDateFrom)) {
-                let {hours, minutes} = getParsedDate(rangeDateTo);
+                let { hours, minutes } = getParsedDate(rangeDateTo);
                 date.setHours(hours);
                 date.setMinutes(minutes);
 
@@ -296,16 +305,43 @@ export default class DatepickerBody {
         this.destroyCells();
 
         this._generateCells();
-        this.cells.forEach((c) => {
-            this.$cells.appendChild(c.render());
-        });
+
+        // PATCH: rendering con colonna settimana solo per la vista giorni
+        if (this.type === consts.days) {
+            const daysInWeek = 7;
+            let row = [];
+            for (let i = 0; i < this.cells.length; i++) {
+                row.push(this.cells[i]);
+                if (row.length === daysInWeek) {
+                    // Numero settimana ISO sul primo giorno della riga
+                    const weekNum = getISOWeekNumber(row[0].date);
+
+                    // Cella settimana
+                    const weekDiv = document.createElement('div');
+                    weekDiv.className = 'air-datepicker-body--week-num';
+                    weekDiv.textContent = weekNum;
+
+                    // Appendi colonna settimana
+                    this.$cells.appendChild(weekDiv);
+
+                    // Appendi i giorni della riga
+                    row.forEach(c => this.$cells.appendChild(c.render()));
+
+                    row = [];
+                }
+            }
+        } else {
+            // vista mesi/anni: rendering normale
+            this.cells.forEach((c) => {
+                this.$cells.appendChild(c.render());
+            });
+        }
     }
 
-
     static getDaysDates(dp, cb) {
-        let {viewDate, opts: {fixedHeight}, locale: {firstDay}} = dp,
+        let { viewDate, opts: { fixedHeight }, locale: { firstDay } } = dp,
             totalMonthDays = getDaysCount(viewDate),
-            {year, month} = getParsedDate(viewDate),
+            { year, month } = getParsedDate(viewDate),
             firstMonthDay = new Date(year, month, 1),
             lastMonthDay = new Date(year, month, totalMonthDays),
             daysFromPrevMonth = firstMonthDay.getDay() - firstDay,
@@ -317,7 +353,7 @@ export default class DatepickerBody {
         let firstRenderDate = subDays(firstMonthDay, daysFromPrevMonth),
             totalRenderDays = totalMonthDays + daysFromPrevMonth + daysFromNextMonth,
             firstRenderDayDate = firstRenderDate.getDate(),
-            {year:renderYear, month: renderMonth} = getParsedDate(firstRenderDate),
+            { year: renderYear, month: renderMonth } = getParsedDate(firstRenderDate),
             i = 0;
 
         if (fixedHeight) {
@@ -340,7 +376,7 @@ export default class DatepickerBody {
 
     static getMonthsDates(dp, cb) {
         let totalMonths = 12,
-            {year} = dp.parsedViewDate,
+            { year } = dp.parsedViewDate,
             currentMonth = 0,
             dates = [];
 
