@@ -91,7 +91,7 @@ export default class DatepickerBody {
 
     _getDayNamesHtml(firstDay = this.dp.locale.firstDay) {
         // PATCH: aggiungi header colonna settimana
-        let html = '<div class="air-datepicker-body--week-num air-datepicker-body--day-name">Set</div>';
+        let html = '<div class="air-datepicker-body--week-num air-datepicker-body--day-name">WEEK</div>';
         let isWeekend = this.dp.isWeekend,
             { onClickDayName } = this.opts,
             curDay = firstDay,
